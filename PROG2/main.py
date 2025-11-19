@@ -4,18 +4,22 @@ from kaempfer import Kaempfer
 pygame.init()
 
 #Spielfenster erstellen
-BILDSCHIRMBREITE = 1000
-BILDSCHIRMHOEHE = 600
+bildschirmbreite = 1000
+bildschirmhoehe = 600
 
-bildschirm = pygame.display.set_mode((BILDSCHIRMBREITE, BILDSCHIRMHOEHE))
+bildschirm = pygame.display.set_mode((bildschirmbreite, bildschirmhoehe))
 pygame.display.set_caption('Clash of Shadows')
 
+#Bildrate einstellen
+uhr = pygame.time.Clock()
+FPS = 60
+
 #Hintergrundbild laden 
-hintergrundbild = pygame.image.load('Ressourcen/Bilder/Hintergrund/Hintergrundbild.png').convert_alpha()
+hintergrundbild = pygame.image.load('PROG2/Ressourcen/Bilder/Hintergrund/Hintergrundbild.png').convert_alpha()
 
 #Funktion zum Zeichnen des Hintergrunds
 def hintergrund_zeichnen():
-    skalierter_hintergrund = pygame.transform.scale(hintergrundbild, (BILDSCHIRMBREITE, BILDSCHIRMHOEHE))
+    skalierter_hintergrund = pygame.transform.scale(hintergrundbild, (bildschirmbreite, bildschirmhoehe))
     bildschirm.blit(skalierter_hintergrund, (0, 0))
 
 
@@ -27,14 +31,19 @@ kaempfer_2 = Kaempfer(700, 310)
 laufen = True
 while laufen:
 
-    #Hintergrund zeichnen 
+    uhr.tick(FPS)
+
+    #Hintergrund zeichen 
     hintergrund_zeichnen()
+
+    #Kämpfer bewegen
+    kaempfer_1.bewegen(bildschirmbreite)
 
     #kaempfer zeichnen
     kaempfer_1.zeichnen(bildschirm)
     kaempfer_2.zeichnen(bildschirm)
 
-    #Ereignisbehandler
+#Ereignisbehandler
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             laufen = False
