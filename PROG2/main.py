@@ -37,7 +37,7 @@ while laufen:
     hintergrund_zeichnen()
 
     #Kämpfer bewegen
-    kaempfer_1.bewegen(bildschirmbreite)
+    kaempfer_1.bewegen(bildschirmbreite, bildschirmhoehe)
 
     #kaempfer zeichnen
     kaempfer_1.zeichnen(bildschirm)
