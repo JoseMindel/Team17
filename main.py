@@ -54,3 +54,5 @@ while laufen:
 
 #pygame verlassen 
 pygame.quit()
+
+#Test
