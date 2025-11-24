@@ -13,10 +13,10 @@ class Kaempfer():
         dx = 0
         dy = 0
 
-        #Tasten erfassen, mit Hilfe von ChatGPT Code für Tastenabfrage generiert
+        #Tasten erfassen
         tasten = pygame.key.get_pressed()
 
-        #bewegung
+        #bewegung,  Teil des Codes mit Hilfe von ChatGPT für Tastenabfrage generiert
         if tasten[pygame.K_a]:
             dx = -GESCHWINDIGKEIT
         if tasten[pygame.K_d]:
