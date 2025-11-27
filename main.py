@@ -33,20 +33,25 @@ while laufen:
 
     uhr.tick(FPS)
 
+#Ereignisbehandler
+    for event in pygame.event.get():
+        if event.type == pygame.QUIT:
+            laufen = False
     #Hintergrund zeichen 
     hintergrund_zeichnen()
 
     #Kämpfer bewegen
     kaempfer_1.bewegen(bildschirmbreite, bildschirmhoehe)
+    kaempfer_2.bewegen(bildschirmbreite, bildschirmhoehe)
 
     #kaempfer zeichnen
     kaempfer_1.zeichnen(bildschirm)
     kaempfer_2.zeichnen(bildschirm)
 
 #Ereignisbehandler
-    for event in pygame.event.get():
+    """ for event in pygame.event.get():
         if event.type == pygame.QUIT:
-            laufen = False
+            laufen = False """
 
 
     #Anzeige aktualisieren 
