@@ -58,8 +58,8 @@ class Kaempfer():
             dx = -GESCHWINDIGKEIT
         if tasten[pygame.K_RIGHT] or tasten[pygame.K_d]:
             dx = GESCHWINDIGKEIT
-        #Sprung (Pfeil hoch, W oder Leertaste)
-        if (tasten[pygame.K_UP] or tasten[pygame.K_w] or tasten[pygame.K_SPACE]) and not self.springen:
+        #Sprung (Pfeil hoch, W)
+        if (tasten[pygame.K_UP] or tasten[pygame.K_w]) and not self.springen:
             self.geschwindigkeit_y = -30
             self.springen = True 
 
