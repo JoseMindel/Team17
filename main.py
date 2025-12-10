@@ -24,8 +24,8 @@ def hintergrund_zeichnen():
 
 
 #Zwei Instanzen von Kämpfern erstellen 
-kaempfer_1 = Kaempfer(200, 310)
-kaempfer_2 = Kaempfer(700, 310)
+kaempfer_1 = Kaempfer(200, 310, 1)
+kaempfer_2 = Kaempfer(700, 310, 2)
 
 #Spielschleife
 laufen = True
@@ -41,8 +41,8 @@ while laufen:
     hintergrund_zeichnen()
 
     #Kämpfer bewegen
-    kaempfer_1.bewegen(bildschirmbreite, bildschirmhoehe)
-    kaempfer_2.bewegen(bildschirmbreite, bildschirmhoehe)
+    kaempfer_1.bewegen(bildschirmbreite, bildschirmhoehe, bildschirm)
+    kaempfer_2.bewegen(bildschirmbreite, bildschirmhoehe, bildschirm)
 
     #kaempfer zeichnen
     kaempfer_1.zeichnen(bildschirm)
