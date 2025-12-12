@@ -1,246 +1,319 @@
 import pygame
 
-import pygame
-
 
 class Kaempfer:
-    def __init__(self, x, y, spieler_nummer, gegner=None, sprite_datei=None, animation_schritte=None, frame_size=64, animation_data=None):
-        
-        # Setze Sprite-Größe (Default 64, kann übergeben werden)
-        self.größe = frame_size
-        
-        # Animation-Daten: [(sheet, frame_w, frame_h, frame_count), ...]
-        # Index: 0=IDLE, 1=RUN, 2=ATTACK, 3=HURT
-        self.animation_data = animation_data
-        self.current_animation = 0  # 0=IDLE
-        self.frame_index = 0
-        self.frame_timer = 0
-        self.frame_delay = 5  # Frames zwischen Animation-Frames (höher = langsamer)
+    """Kurze, klare Kämpferklasse – nur Animation & Bewegung, kein Sound."""
+    
+    def __init__(self, x, y, spieler_nummer, daten, sprite_sheet, animation_schritte, gegner=None):
+        # daten: [size, scale, offset]
+        self.size = daten[0]
+        self.image_scale = daten[1]
+        self.offset = daten[2]
 
-        # Richtung, in die der Kämpfer schaut
-        self.umdrehen = False
-
-        # Lade die Sprites, wenn eine Sprite-Datei und Animationsschritte übergeben wurden
-        self.animation_liste = self.lade_sprites(sprite_datei, animation_schritte) if sprite_datei and animation_schritte else None
-
-        # Aktuelle Aktion des Kämpfers (0=IDLE, 1=RUN, 2=ATTACK, 3=HURT)
-        self.aktion = 0  # 0 = IDLE
-
-        # Aktueller Frame-Index in der Animation
-        self.frame_index = 0 
-
-        # Setze das initiale Bild nur, wenn Animationen geladen wurden
-        if self.animation_liste is not None:
-            self.image = self.animation_liste[self.aktion][self.frame_index]
-        else:
-            # Erstelle ein leeres Placeholder-Bild, falls keine Sprites geladen wurden
-            self.image = pygame.Surface((self.größe, self.größe))
-            self.image.fill((200, 200, 200))
-
-        # Rechteck als Platzhalter für die Spielfigur
-        self.rechteck = pygame.Rect(x, y, 150, 300)
-
-        # Vertikale Geschwindigkeit (für Sprung/Schwerkraft)
-        self.geschwindigkeit_y = 0
-
-        # Merker, ob der Kämpfer gerade in der Luft ist
-        self.springen = False
-
-        # (noch nicht genutzt, könnte für verschiedene Attacken dienen)
-        self.angriffstyp = 0
-
-        # 1 = Spieler 1, 2 = Spieler 2
         self.spieler_nummer = spieler_nummer
+        self.gegner = gegner
 
-        # Angriffszustand (für Dauer + Cooldown)
+        # Collision-Rechteck (logische Position). x/y sind oben-links.
+        # Das Sprite wird über offset/scale relativ zum Rechteck gezeichnet.
+        self.box_width = 100
+        self.box_height = 220
+        self.rechteck = pygame.Rect(x, y, self.box_width, self.box_height)
+
+        # Animations-Schritte/Sheet merken und laden
+        self.animation_steps = animation_schritte
+        self.sprite_sheet = sprite_sheet
+        self.animations_liste = self.lade_sprites(self.sprite_sheet, self.animation_steps)
+        self.frame_index = 0
+        # Aktionen: 0=idle, 1=run, 2=jump, 3=attack, 4=hurt, 5=death
+        self.aktion = 0
+        self.bild = self.animations_liste[self.aktion][self.frame_index] if self.animations_liste else None
+        self.update_time = pygame.time.get_ticks()
+
+        # Zustand
+        self.running = False
+        self.springen = False
+        self.geschwindigkeit_y = 0
         self.angriff_aktiv = False
-        self.angriff_ende_zeit = 0
-        self.angriff_schaden_verursacht = False  # Flag um doppelten Schaden zu verhindern
-
-        #Gesundheit des Kämpfers
+        self.angriff_schaden_verursacht = False
+        self.hurt = False
         self.gesundheit = 100
-
-        # Gegner-Referenz (wird später gesetzt)
-        self.gegner = gegner #speichert den Gegner des Kämpfers
-
-    
-    #Laden von Sprites
-    def lade_sprites(self, sprite_datei, animation_schritte):
-        print(f"Sprite-Datei Größe: {sprite_datei.get_width()}x{sprite_datei.get_height()}")
-        print(f"Frame-Größe: {self.größe}x{self.größe}")
-        print(f"Animation-Schritte: {animation_schritte}")
+        self.alive = True
+        self.umdrehen = False
         
-        animation_liste = []
-        for y, frames_count in enumerate(animation_schritte):
-            temp_img_list = []        
-            for x in range(frames_count):  # Iteriere über die Anzahl der Frames für diese Animation
-                try:
-                    temp_img = sprite_datei.subsurface(x * self.größe, y * self.größe, self.größe, self.größe) 
-                    temp_img_list.append(temp_img)
-                    if x == 0:
-                        print(f"Animation {y}, Frame 0 extrahiert: ({x * self.größe}, {y * self.größe}) -> {self.größe}x{self.größe}")
-                except ValueError as e:
-                    print(f"FEHLER bei Animation {y}, Frame {x}: {e}")
-            animation_liste.append(temp_img_list)
-        print(f"Animationen geladen: {len(animation_liste)} Animationen, erste mit {len(animation_liste[0]) if animation_liste else 0} Frames")    
-        return animation_liste    
+        # Angriffsstärke und Hitbox
+        self.angriff_schaden = 10
+        self.angriff_hitbox_ratio = (0.5, 0.4, 0.3)  # (width_ratio, height_ratio, y_offset_ratio)
+        
+        # Cooldown
+        self.angriff_ende_zeit = 0
+        self.hurt_dauer = 300
+        self.hurt_ende_zeit = 0
+        
+        # Frame-Timing
+        self.frame_verzoegerung = 5
+        self.frame_zeitgeber = 0
 
-            
-    # Bewegung des Kämpfers
-    
-    def bewegen(self, bildschirmbreite, bildschirmhoehe, oberflaeche, gegner):
+    def lade_sprites(self, sprite_sheet=None, animation_steps=None):
+        """Laden und Slicing von Sprite-Frames."""
+        # Fallback auf im Objekt gespeicherte Werte
+        sprite_sheet = sprite_sheet or self.sprite_sheet
+        animation_steps = animation_steps or self.animation_steps
+        
+        if sprite_sheet is None or animation_steps is None:
+            return []
+        
+        animations_liste = []
+        for y_zeile, frames_anzahl in enumerate(animation_steps):
+            temp_img_list = []
+            for x_frame in range(frames_anzahl):
+                try:
+                    x = x_frame * self.size
+                    y = y_zeile * self.size
+                    frame = sprite_sheet.subsurface((x, y, self.size, self.size))
+                    s = pygame.transform.scale(frame, (self.size * self.image_scale, self.size * self.image_scale))
+                    temp_img_list.append(s)
+                except Exception:
+                    # Fallback: leere Oberfläche
+                    s = pygame.Surface((self.size * self.image_scale, self.size * self.image_scale), pygame.SRCALPHA)
+                    temp_img_list.append(s)
+            animations_liste.append(temp_img_list)
+        
+        return animations_liste
+
+    def move(self, bildschirmbreite, bildschirmhoehe, oberflaeche, gegner):
+        """Bewegung für Spieler 1 (A/D/W, R für Angriff)."""
         GESCHWINDIGKEIT = 10
         SCHWERKRAFT = 2
         dx = 0
         dy = 0
 
-        # Tasten erfassen
         tasten = pygame.key.get_pressed()
+        self.running = False
 
-        # Bestimme die aktuelle Animation basierend auf Spieleraktion
-        ist_bewegung = False
-        
-        # links/rechts bewegen (Spieler 1: A/D, Spieler 2: Pfeiltasten)
-        if self.spieler_nummer == 1:
-            if tasten[pygame.K_a]:
-                dx = -GESCHWINDIGKEIT
-                ist_bewegung = True
-            if tasten[pygame.K_d]:
-                dx = GESCHWINDIGKEIT
-                ist_bewegung = True
-        else:  # Spieler 2
-            if tasten[pygame.K_LEFT]:
-                dx = -GESCHWINDIGKEIT
-                ist_bewegung = True
-            if tasten[pygame.K_RIGHT]:
-                dx = GESCHWINDIGKEIT
-                ist_bewegung = True
-        
-        # Setze Animation basierend auf Zustand
-        if self.angriff_aktiv:
-            self.current_animation = 2  # ATTACK
-        elif ist_bewegung:
-            self.current_animation = 1  # RUN
-        else:
-            self.current_animation = 0  # IDLE
-        
-        # Update frame animation
-        if self.animation_data is not None:
-            self.frame_timer += 1
-            if self.frame_timer >= self.frame_delay:
-                self.frame_timer = 0
-                sheet, frame_w, frame_h, frame_count = self.animation_data[self.current_animation]
-                self.frame_index = (self.frame_index + 1) % frame_count
-                # Extrahiere den aktuellen Frame
-                try:
-                    self.image = sheet.subsurface(self.frame_index * frame_w, 0, frame_w, frame_h)
-                except:
-                    pass
+        # Behandle Hurt (Stun)
+        jetzt = pygame.time.get_ticks()
+        if jetzt < self.hurt_ende_zeit:
+            self._aktualisiere_frame()
+            self.geschwindigkeit_y += SCHWERKRAFT
+            dy += self.geschwindigkeit_y
+            boden = bildschirmhoehe - 110
+            if self.rechteck.bottom + dy > boden:
+                dy = boden - self.rechteck.bottom
+                self.geschwindigkeit_y = 0
+                self.springen = False
+            self.rechteck.y += dy
+            return
 
-        # springen (Spieler 1: W, Spieler 2: UP), nur wenn nicht schon gesprungen wird
-        jump_taste = tasten[pygame.K_w] if self.spieler_nummer == 1 else tasten[pygame.K_UP]
-        if jump_taste and not self.springen:
+        # Bewegung
+        if tasten[pygame.K_a]:
+            dx = -GESCHWINDIGKEIT
+            self.running = True
+        if tasten[pygame.K_d]:
+            dx = GESCHWINDIGKEIT
+            self.running = True
+
+        # Springen
+        if tasten[pygame.K_w] and not self.springen:
             self.geschwindigkeit_y = -30
             self.springen = True
-        
 
-        # Schwerkraft hinzufügen
+        # Angriff
+        if tasten[pygame.K_r] and not self.angriff_aktiv and jetzt >= self.angriff_ende_zeit:
+            self.angriff_aktiv = True
+            self.angriff_ende_zeit = jetzt + 200
+
+        # Setze Aktion
+        if self.angriff_aktiv:
+            self.aktion = 3  # ATTACK
+        elif self.springen:
+            self.aktion = 2  # JUMP
+        elif self.running:
+            self.aktion = 1  # RUN
+        else:
+            self.aktion = 0  # IDLE
+
+        # Animation aktualisieren
+        self._aktualisiere_frame()
+
+        # Schwerkraft
         self.geschwindigkeit_y += SCHWERKRAFT
         dy += self.geschwindigkeit_y
 
-        # Bildschirmgrenzen links/rechts
-        if self.rechteck.left + dx < 0:
-            dx = -self.rechteck.left
-        if self.rechteck.right + dx > bildschirmbreite:
-            dx = bildschirmbreite - self.rechteck.right
+        # Bildschirmgrenzen: Sprite muss vollständig auf dem Bildschirm bleiben
+        sprite_w = self.bild.get_width() if self.bild is not None else (self.size * self.image_scale)
+        offset_x = self.offset[0] * self.image_scale
+        draw_x_next = (self.rechteck.x + dx) - offset_x
+        if draw_x_next < 0:
+            dx += -draw_x_next
+        if draw_x_next + sprite_w > bildschirmbreite:
+            dx -= (draw_x_next + sprite_w - bildschirmbreite)
 
-        # Boden-Kollision (ein bisschen Abstand zum unteren Rand)
-        boden_hoehe = bildschirmhoehe - 110
-        if self.rechteck.bottom + dy > boden_hoehe:
-            dy = boden_hoehe - self.rechteck.bottom
+        # Boden-Kollision
+        boden = bildschirmhoehe - 110
+        if self.rechteck.bottom + dy > boden:
+            dy = boden - self.rechteck.bottom
             self.geschwindigkeit_y = 0
             self.springen = False
 
-        #Sicherstellen Kämpfer einander gegenüberstehen 
-        if gegner.rechteck.centerx > self.rechteck.centerx:
-            self.umdrehen = False
-        else:
-            self.umdrehen = True
+        # Blickrichtung gegenüber Gegner
+        if gegner and hasattr(gegner, 'rechteck'):
+            if gegner.rechteck.centerx > self.rechteck.centerx:
+                self.umdrehen = False
+            else:
+                self.umdrehen = True
 
         # Position aktualisieren
         self.rechteck.x += dx
         self.rechteck.y += dy
 
-        # ===== Angriff / Cooldown-Logik =====
-        jetzt = pygame.time.get_ticks()
-        ANGRIFF_DAUER = 200      # wie lange der Angriff sichtbar ist (ms)
-        ANGRIFF_COOLDOWN = 400   # Wartezeit bis zum nächsten Angriff (ms)
-
-        # Angriff starten, wenn richtige Taste gedrückt wird
-        # und gerade kein Angriff aktiv ist und Cooldown vorbei ist
-        taste_gedrueckt_spieler1 = self.spieler_nummer == 1 and tasten[pygame.K_r]
-        taste_gedrueckt_spieler2 = self.spieler_nummer == 2 and tasten[pygame.K_t]
-
-        if (taste_gedrueckt_spieler1 or taste_gedrueckt_spieler2) \
-                and not self.angriff_aktiv \
-                and jetzt >= self.angriff_ende_zeit:
-            self.angriff_aktiv = True
-            self.angriff_ende_zeit = jetzt + ANGRIFF_DAUER
-
-        # Solange der Angriff aktiv ist, Hitbox zeichnen
+        # Angriff-Logik
         if self.angriff_aktiv:
-            # Übergebe den Gegner, damit Kollisionen geprüft und Schaden verursacht wird
-            ziel = getattr(self, 'gegner', None)
-            self.angriff(oberflaeche, ziel)
-
-            # Angriff beenden, wenn Dauer vorbei
-            if jetzt >= self.angriff_ende_zeit:
+            self._angriff(oberflaeche, gegner)
+            if pygame.time.get_ticks() >= self.angriff_ende_zeit:
                 self.angriff_aktiv = False
-                # Cooldown-Zeit setzen
-                self.angriff_schaden_verursacht = False  # Flag zurücksetzen
-                self.angriff_ende_zeit = jetzt + ANGRIFF_COOLDOWN
+                self.angriff_schaden_verursacht = False
+                self.angriff_ende_zeit = pygame.time.get_ticks() + 400
 
-    
-    # Angriff
-    
-    def angriff(self, oberflaeche, gegner=None):
-        # Angriff abhängig von umdrehen-Flag (wer schaut nach links/rechts)
+    def move2(self, bildschirmbreite, bildschirmhoehe, oberflaeche, gegner):
+        """Bewegung für Spieler 2 (Pfeiltasten, T für Angriff)."""
+        GESCHWINDIGKEIT = 10
+        SCHWERKRAFT = 2
+        dx = 0
+        dy = 0
+
+        tasten = pygame.key.get_pressed()
+        self.running = False
+
+        # Behandle Hurt (Stun)
+        jetzt = pygame.time.get_ticks()
+        if jetzt < self.hurt_ende_zeit:
+            self._aktualisiere_frame()
+            self.geschwindigkeit_y += SCHWERKRAFT
+            dy += self.geschwindigkeit_y
+            boden = bildschirmhoehe - 110
+            if self.rechteck.bottom + dy > boden:
+                dy = boden - self.rechteck.bottom
+                self.geschwindigkeit_y = 0
+                self.springen = False
+            self.rechteck.y += dy
+            return
+
+        # Bewegung
+        if tasten[pygame.K_LEFT]:
+            dx = -GESCHWINDIGKEIT
+            self.running = True
+        if tasten[pygame.K_RIGHT]:
+            dx = GESCHWINDIGKEIT
+            self.running = True
+
+        # Springen
+        if tasten[pygame.K_UP] and not self.springen:
+            self.geschwindigkeit_y = -30
+            self.springen = True
+
+        # Angriff
+        if tasten[pygame.K_t] and not self.angriff_aktiv and jetzt >= self.angriff_ende_zeit:
+            self.angriff_aktiv = True
+            self.angriff_ende_zeit = jetzt + 200
+
+        # Setze Aktion
+        if self.angriff_aktiv:
+            self.aktion = 3  # ATTACK
+        elif self.springen:
+            self.aktion = 2  # JUMP
+        elif self.running:
+            self.aktion = 1  # RUN
+        else:
+            self.aktion = 0  # IDLE
+
+        # Animation aktualisieren
+        self._aktualisiere_frame()
+
+        # Schwerkraft
+        self.geschwindigkeit_y += SCHWERKRAFT
+        dy += self.geschwindigkeit_y
+
+        # Bildschirmgrenzen: Sprite muss vollständig auf dem Bildschirm bleiben
+        sprite_w = self.bild.get_width() if self.bild is not None else (self.size * self.image_scale)
+        offset_x = self.offset[0] * self.image_scale
+        draw_x_next = (self.rechteck.x + dx) - offset_x
+        if draw_x_next < 0:
+            dx += -draw_x_next
+        if draw_x_next + sprite_w > bildschirmbreite:
+            dx -= (draw_x_next + sprite_w - bildschirmbreite)
+
+        # Boden-Kollision
+        boden = bildschirmhoehe - 110
+        if self.rechteck.bottom + dy > boden:
+            dy = boden - self.rechteck.bottom
+            self.geschwindigkeit_y = 0
+            self.springen = False
+
+        # Blickrichtung gegenüber Gegner
+        if gegner and hasattr(gegner, 'rechteck'):
+            if gegner.rechteck.centerx > self.rechteck.centerx:
+                self.umdrehen = False
+            else:
+                self.umdrehen = True
+
+        # Position aktualisieren
+        self.rechteck.x += dx
+        self.rechteck.y += dy
+
+        # Angriff-Logik
+        if self.angriff_aktiv:
+            self._angriff(oberflaeche, gegner)
+            if pygame.time.get_ticks() >= self.angriff_ende_zeit:
+                self.angriff_aktiv = False
+                self.angriff_schaden_verursacht = False
+                self.angriff_ende_zeit = pygame.time.get_ticks() + 400
+
+    def _aktualisiere_frame(self):
+        """Frame-Animation aktualisieren."""
+        if not self.animations_liste:
+            return
+        self.frame_zeitgeber += 1
+        if self.frame_zeitgeber >= self.frame_verzoegerung:
+            self.frame_zeitgeber = 0
+            frames = self.animations_liste[self.aktion]
+            self.frame_index = (self.frame_index + 1) % len(frames)
+            self.bild = frames[self.frame_index]
+
+    def _angriff(self, oberflaeche, gegner):
+        """Angriff ausführen und Schaden austeilen."""
+        w = int(self.rechteck.width * self.angriff_hitbox_ratio[0])
+        h = int(self.rechteck.height * self.angriff_hitbox_ratio[1])
+        y_off = int(self.rechteck.height * self.angriff_hitbox_ratio[2])
+        
         if self.umdrehen:
-            # Kämpfer schaut nach links, schlägt nach links
-            start_x = self.rechteck.centerx - 2 * self.rechteck.width
+            start_x = self.rechteck.left - w
         else:
-            # Kämpfer schaut nach rechts, schlägt nach rechts
-            start_x = self.rechteck.centerx
-
-        attacke_rechteck = pygame.Rect(
-            start_x,
-            self.rechteck.y,
-            2 * self.rechteck.width,
-            self.rechteck.height,
-        )
-
-        # Prüfe Kollision mit dem Gegner, falls einer übergeben wurde
-        ziel = gegner if gegner is not None else getattr(self, 'gegner', None)
-        if ziel is not None and attacke_rechteck.colliderect(ziel.rechteck):
-            # Verursache Schaden nur einmal pro Angriff
+            start_x = self.rechteck.right
+        
+        hitbox = pygame.Rect(start_x, self.rechteck.y + y_off, w, h)
+        
+        # Collision
+        if gegner and hitbox.colliderect(gegner.rechteck):
             if not self.angriff_schaden_verursacht:
-                ziel.gesundheit -= 10  # Treffer: Gegner verliert 10 Gesundheit
+                gegner.take_damage(self.angriff_schaden)
                 self.angriff_schaden_verursacht = True
+        
+        # Debug hitbox
+        # pygame.draw.rect(oberflaeche, (0, 255, 0), hitbox)
 
-        pygame.draw.rect(oberflaeche, (0, 255, 0), attacke_rechteck)
+    def take_damage(self, amount):
+        """Schaden erleiden."""
+        self.gesundheit = max(0, self.gesundheit - amount)
+        self.hurt = True
+        self.hurt_ende_zeit = pygame.time.get_ticks() + self.hurt_dauer
 
-    
-    # Zeichnen des Kämpfers
-    
     def zeichnen(self, oberflaeche):
-        # Zeichne das Sprite-Bild nur, wenn Animationen geladen wurden
-        if self.animation_liste is not None:
-            # Skaliere das Bild auf die Größe des Rechtecks (80x180)
-            scaled_image = pygame.transform.scale(self.image, (self.rechteck.width, self.rechteck.height))
-            # Spiegle das Bild, wenn der Kämpfer nach links schaut
+        """Kämpfer zeichnen."""
+        if self.bild is not None:
+            img = self.bild
             if self.umdrehen:
-                scaled_image = pygame.transform.flip(scaled_image, True, False)
-            oberflaeche.blit(scaled_image, (self.rechteck.x, self.rechteck.y))
-        else:
-            # Zeige nur den roten Platzhalter, wenn keine Sprite geladen wurde
-            pygame.draw.rect(oberflaeche, (255, 0, 0), self.rechteck)
+                img = pygame.transform.flip(img, True, False)
+            # Wie im Referenzcode: Sprite relativ zum Collision-Rechteck zeichnen
+            draw_x = self.rechteck.x - (self.offset[0] * self.image_scale)
+            draw_y = self.rechteck.y - (self.offset[1] * self.image_scale)
+            oberflaeche.blit(img, (draw_x, draw_y))

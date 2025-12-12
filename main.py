@@ -14,50 +14,46 @@ pygame.display.set_caption('Clash of Shadows')
 uhr = pygame.time.Clock()
 FPS = 60
 
+# Boden (muss zu kaempfer.py passen)
+BODEN_Y = bildschirmhoehe - 110
+KAEmpfer_BOX_H = 220
+
 #Farben definieren
 rot = (255, 0, 0)
 gelb = (255, 255, 0)
 weiß = (255, 255, 255)
 
 #Kämpfer Variablen definieren
-kaempfer_1_größe = 64
-kaempfer_1_daten = [kaempfer_1_größe] * 1  # Nur IDLE Animation für jetzt
+warrior_size = 162
+warrior_scale = 4
+warrior_offset = [68, 45]
+warrior_data = [warrior_size, warrior_scale, warrior_offset]
+wizard_size = 250
+wizard_scale = 3
+wizard_offset = [112, 93]
+wizard_data = [wizard_size, wizard_scale, wizard_offset]
+
+#Musik laden (später)
+
+#pygame.mixer.music.load('Ressourcen/Audio/Background Music.mp3')
 
 #Hintergrundbild laden 
 hintergrundbild = pygame.image.load('Ressourcen/Bilder/Hintergrund/Hintergrundbild.png').convert_alpha()
 
-#Sprite-Blatt laden (optional)
-try:
-    sprite_sheet = pygame.image.load('Ressourcen/Bilder/Kaempfer_sprite.png').convert_alpha()
-    # animation_schritte: [frames_idle, frames_walk, frames_attack, ...] (Anzahl Frames pro Reihe)
-    animation_frames = [4, 6, 8]  # Beispiel: 4 idle, 6 walk, 8 attack (ANPASSEN!)
-except:
-    sprite_sheet = None
-    animation_frames = None
-
-#Spreete für Kämpfer laden
-kaempfer_sprite_idle = pygame.image.load('Ressourcen/kaempfer_1/Sprites/IDLE.png').convert_alpha()
-kaempfer_sprite_attack = pygame.image.load('Ressourcen/kaempfer_1/Sprites/ATTACK 1.png').convert_alpha()
-kaempfer_sprite_hurt = pygame.image.load('Ressourcen/kaempfer_1/Sprites/HURT.png').convert_alpha()
-kaempfer_sprite_run = pygame.image.load('Ressourcen/kaempfer_1/Sprites/RUN.png').convert_alpha()
+#Sprites für Kämpfer laden
+warrior = pygame.image.load('Ressourcen/brawler_images/images/warrior/Sprites/warrior.png').convert_alpha()
+wizard = pygame.image.load('Ressourcen/brawler_images/images/wizard/Sprites/wizard.png').convert_alpha()
 
 # Animation-Daten: (sprite_sheet, frame_width, frame_height, frame_count)
-# Index: 0=IDLE, 1=RUN, 2=ATTACK, 3=HURT
-animation_data = [
-    (kaempfer_sprite_idle, 96, 96, 9),      # IDLE
-    (kaempfer_sprite_run, 110, 96, 14),     # RUN
-    (kaempfer_sprite_attack, 84, 96, 8),    # ATTACK
-    (kaempfer_sprite_hurt, 96, 96, 4),      # HURT
-]
+warrior_schritte = [10, 8, 1, 7, 7, 3, 7]  # Anzahl der Frames für jede Animation
+wizard_schritte = [8, 8, 1, 8, 8, 3, 7]  # Anzahl der Frames für jede Animation    
 
-#Definieren Sie die Anzahl der Schritte in jeder Animation
-Animation_Schritte = [ 
-    9,  # IDLE - 9 frames
-]
 
-#Zwei Instanzen von Kämpfern erstellen 
-kaempfer_1 = Kaempfer(200, 310, 1, sprite_datei=kaempfer_sprite_idle, animation_schritte=Animation_Schritte, frame_size=96, animation_data=animation_data)
-kaempfer_2 = Kaempfer(700, 310, 2, sprite_datei=kaempfer_sprite_idle, animation_schritte=Animation_Schritte, frame_size=96, animation_data=animation_data)
+#Zwei Instanzen von Kämpfern erstellen
+# Nutze die korrekten Animations-Schritt-Listen
+spawn_y = BODEN_Y - KAEmpfer_BOX_H
+kaempfer_1 = Kaempfer(300, spawn_y, 1, warrior_data, warrior, warrior_schritte)
+kaempfer_2 = Kaempfer(700, spawn_y, 2, wizard_data, wizard, wizard_schritte)
 
 #Funktion zum Zeichnen des Hintergrunds
 def hintergrund_zeichnen(oberflaeche):
@@ -103,18 +99,12 @@ while laufen:
     zeichen_gesundheitsbalken(kaempfer_2.gesundheit, 580, 20, bildschirm)
 
     #Kämpfer bewegen (übergebe den gegner, damit sie sich richtig ausrichten)
-    kaempfer_1.bewegen(bildschirmbreite, bildschirmhoehe, bildschirm, kaempfer_2)
-    kaempfer_2.bewegen(bildschirmbreite, bildschirmhoehe, bildschirm, kaempfer_1)
+    kaempfer_1.move(bildschirmbreite, bildschirmhoehe, bildschirm, kaempfer_2)
+    kaempfer_2.move2(bildschirmbreite, bildschirmhoehe, bildschirm, kaempfer_1)
 
     #kaempfer zeichnen
     kaempfer_1.zeichnen(bildschirm)
     kaempfer_2.zeichnen(bildschirm)
-
-#Ereignisbehandler
-    """ for event in pygame.event.get():
-        if event.type == pygame.QUIT:
-            laufen = False """
-
 
     #Anzeige aktualisieren 
     pygame.display.update()
