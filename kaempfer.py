@@ -17,12 +17,16 @@ class Kaempfer:
         self.frame_timer = 0
         self.frame_delay = 5  # Frames zwischen Animation-Frames (höher = langsamer)
 
+        # Richtung, in die der Kämpfer schaut
         self.umdrehen = False
 
+        # Lade die Sprites, wenn eine Sprite-Datei und Animationsschritte übergeben wurden
         self.animation_liste = self.lade_sprites(sprite_datei, animation_schritte) if sprite_datei and animation_schritte else None
 
+        # Aktuelle Aktion des Kämpfers (0=IDLE, 1=RUN, 2=ATTACK, 3=HURT)
         self.aktion = 0  # 0 = IDLE
 
+        # Aktueller Frame-Index in der Animation
         self.frame_index = 0 
 
         # Setze das initiale Bild nur, wenn Animationen geladen wurden
