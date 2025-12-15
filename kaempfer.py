@@ -221,7 +221,7 @@ class Kaempfer:
             self.springen = True
 
         # Angriff
-        if tasten[pygame.K_t] and not self.angriff_aktiv and jetzt >= self.angriff_ende_zeit:
+        if tasten[pygame.K_SPACE] and not self.angriff_aktiv and jetzt >= self.angriff_ende_zeit:
             self.angriff_aktiv = True
             self.angriff_ende_zeit = jetzt + 200
 
