@@ -1,0 +1,34 @@
+<mxfile host="app.diagrams.net" agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36 Edg/143.0.0.0" version="29.2.7">
+  <diagram name="Seite-1" id="G_lZrS3-FwK_a1RlSAvx">
+    <mxGraphModel grid="1" page="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" pageScale="1" pageWidth="827" pageHeight="1169" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="dutarr0w6F_VO1smAq1V-2" edge="1" parent="1" style="rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=none;" value="">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="240" y="197.30769230769238" as="sourcePoint" />
+            <mxPoint x="340" y="229.61538461538453" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="wsRxlpn5A2YzqTP4OQLg-43" edge="1" parent="1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.5;exitY=0;exitDx=0;exitDy=0;">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="150" y="200" as="sourcePoint" />
+            <mxPoint x="150" y="200" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="wsRxlpn5A2YzqTP4OQLg-14" parent="1" style="swimlane;fontStyle=1;align=center;verticalAlign=top;childLayout=stackLayout;horizontal=1;startSize=26;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=1;marginBottom=0;whiteSpace=wrap;html=1;" value="Fighter" vertex="1">
+          <mxGeometry height="830" width="330" x="248" y="170" as="geometry" />
+        </mxCell>
+        <mxCell id="wsRxlpn5A2YzqTP4OQLg-15" parent="wsRxlpn5A2YzqTP4OQLg-14" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;whiteSpace=wrap;html=1;" value="- size: int&lt;div&gt;- image_scale: int&lt;/div&gt;&lt;div&gt;- offset: tuple&lt;/div&gt;&lt;div&gt;- spieler_nummer: int&lt;/div&gt;&lt;div&gt;-&amp;nbsp;&lt;span style=&quot;background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));&quot;&gt;gegner: Kaempfer&lt;/span&gt;&lt;/div&gt;&lt;div&gt;&lt;span style=&quot;background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));&quot;&gt;- box_width: int&lt;/span&gt;&lt;/div&gt;&lt;div&gt;&lt;span style=&quot;background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));&quot;&gt;- box_height: int&lt;/span&gt;&lt;/div&gt;&lt;div&gt;- rechteck: pygame.Rect&lt;/div&gt;&lt;div&gt;- animations_steps: list&amp;lt;int&amp;gt;&lt;/div&gt;&lt;div&gt;- sprite_sheet: pygame.Surface&lt;/div&gt;&lt;div&gt;- animatios_liste: list&amp;lt;Surface&amp;gt;&lt;/div&gt;&lt;div&gt;- frame_index: int&lt;/div&gt;&lt;div&gt;- aktion: int&lt;/div&gt;&lt;div&gt;- bild: pygame.Surface&lt;/div&gt;&lt;div&gt;- update_time: int&lt;/div&gt;&lt;div&gt;- running: bool&lt;/div&gt;&lt;div&gt;- springen: bool&lt;/div&gt;&lt;div&gt;- geschwindigkeit_y : float&lt;/div&gt;&lt;div&gt;- angriff_aktiv : bool&lt;/div&gt;&lt;div&gt;- angriff_schaden_verursacht : bool&lt;/div&gt;&lt;div&gt;- hurt : bool&lt;/div&gt;&lt;div&gt;- gesundheit: float&lt;/div&gt;&lt;div&gt;- alive: bool&lt;/div&gt;&lt;div&gt;- umdrehen : bool&lt;/div&gt;&lt;div&gt;- angriff_schaden : int&lt;/div&gt;&lt;div&gt;- angriff_hitbox_ratio: tuple&amp;lt;float&amp;gt;&lt;/div&gt;&lt;div&gt;- angriff_ende_zeit: int&lt;/div&gt;&lt;div&gt;- hurt_dauer: int&lt;/div&gt;&lt;div&gt;- hurt_ende_zeit: int&lt;/div&gt;&lt;div&gt;- frame_verzoergerung&lt;/div&gt;&lt;div&gt;- frame_zeitgeber: int&lt;/div&gt;&lt;div&gt;&lt;br&gt;&lt;/div&gt;" vertex="1">
+          <mxGeometry height="494" width="330" y="26" as="geometry" />
+        </mxCell>
+        <mxCell id="wsRxlpn5A2YzqTP4OQLg-16" parent="wsRxlpn5A2YzqTP4OQLg-14" style="line;strokeWidth=1;fillColor=none;align=left;verticalAlign=middle;spacingTop=-1;spacingLeft=3;spacingRight=3;rotatable=0;labelPosition=right;points=[];portConstraint=eastwest;strokeColor=inherit;" value="" vertex="1">
+          <mxGeometry height="8" width="330" y="520" as="geometry" />
+        </mxCell>
+        <mxCell id="wsRxlpn5A2YzqTP4OQLg-17" parent="wsRxlpn5A2YzqTP4OQLg-14" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;whiteSpace=wrap;html=1;" value="+ __init__(x: int, y:int, spieler_nummer:int, daten:list, sprite_sheet: Surface, animation_schritte:list&amp;lt;int&amp;gt;, gegner:Kaempfer=None)&lt;div&gt;+ lade_sprites(sprite_sheet:Surface, animation_steps:list&amp;lt;int&amp;gt;): list&amp;lt;Surface&amp;gt;&lt;/div&gt;&lt;div&gt;+ move(bildschirmbreite:int, bildschirmhoehe:int, oberflaeche:Surface,gegner:Kaempfer): void&lt;/div&gt;&lt;div&gt;+move2(bildschirmbreite:int, bildschirmhoehe:int, oberflaeche:Surface, gegner:Kaempfer): void&lt;/div&gt;&lt;div&gt;+_aktualisiere_frame(): void&lt;/div&gt;&lt;div&gt;+_angriff(oberflaeche:Surface, gegner:Kaempfer): void&lt;/div&gt;&lt;div&gt;+ take_damage(amount:int): void&lt;/div&gt;&lt;div&gt;+ zeichnen(oberflaeche:Surface): void&lt;/div&gt;" vertex="1">
+          <mxGeometry height="302" width="330" y="528" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>
