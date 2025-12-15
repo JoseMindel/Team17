@@ -4,6 +4,20 @@ from kaempfer import Kaempfer
 
 pygame.init()
 
+#Sounds
+pygame.mixer.init()
+
+enter_sound = pygame.mixer.Sound("Ressourcen/sounds/Enter (Menu).mp3")
+wizard_attack_sound = pygame.mixer.Sound("Ressourcen/sounds/magic.wav")
+hit_sound = pygame.mixer.Sound("Ressourcen/sounds/sword.wav")
+
+menu_music = "Ressourcen/sounds/music.mp3"
+fight_music = "Ressourcen/sounds/Mortal_Kombat.mp3"
+
+enter_sound.set_volume(0.7)
+wizard_attack_sound.set_volume(0.7)
+hit_sound.set_volume(0.7)
+pygame.mixer.music.set_volume(0.4)
 
 # Grundeinstellungen
 bildschirmbreite = 1000
@@ -158,8 +172,7 @@ charaktere = [
         "ordner": "Ressourcen/samurai 1",
         "frames": {"idle": 4, "run": 8, "jump": 2, "attack": 4, "hit": 3, "death": 7},
         "scale": 3,
-        # Positionsbestimmung
-        "offset": [85, 53]
+        "offset": [85, 53] 
     },
     {
         "name": "Samurai 2",
@@ -207,15 +220,25 @@ def erstelle_kaempfer(index, x, spieler_nr):
     k.bild = animationen[0][0]
     return k
 
+pygame.mixer.music.load(menu_music)
+pygame.mixer.music.play(-1)
+
+enter_gedrueckt = False
+prev_attack_links = False
+prev_attack_rechts = False
+
 
 # Hauptschleife
 laufen = True
 while laufen:
     uhr.tick(FPS)
 
+    enter_gedrueckt = False
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             laufen = False
+        if event.type == pygame.KEYDOWN and event.key == pygame.K_RETURN:
+            enter_gedrueckt = True
 
     hintergrund_zeichnen()
 
@@ -253,7 +276,12 @@ while laufen:
             bildschirm.blit(font.render(c["name"], True, farbe_l), (220, y + 6))
             bildschirm.blit(font.render(c["name"], True, farbe_r), (600, y + 6))
 
-        if t[pygame.K_RETURN] and auswahl_links != auswahl_rechts:
+        if enter_gedrueckt and auswahl_links != auswahl_rechts:
+            enter_sound.play()
+            pygame.mixer.music.stop()
+            pygame.mixer.music.load(fight_music)
+            pygame.mixer.music.play(-1)
+
             name_links = charaktere[auswahl_links]["name"]
             name_rechts = charaktere[auswahl_rechts]["name"]
 
@@ -266,6 +294,9 @@ while laufen:
             modus = "kampf"
             round_start = pygame.time.get_ticks()
             runde_beendet = False
+
+            prev_attack_links = False
+            prev_attack_rechts = False
 
     else:
         sek = (pygame.time.get_ticks() - round_start) // 1000
@@ -287,6 +318,20 @@ while laufen:
         else:
             kaempfer_links._aktualisiere_frame()
             kaempfer_rechts._aktualisiere_frame()
+
+        if kaempfer_links.angriff_aktiv and not prev_attack_links:
+            if name_links == "Wizard":
+                wizard_attack_sound.play()
+            else:
+                hit_sound.play()
+        if kaempfer_rechts.angriff_aktiv and not prev_attack_rechts:
+            if name_rechts == "Wizard":
+                wizard_attack_sound.play()
+            else:
+                hit_sound.play()
+
+        prev_attack_links = kaempfer_links.angriff_aktiv
+        prev_attack_rechts = kaempfer_rechts.angriff_aktiv
 
         # Grundrichtung
         if kaempfer_links.rechteck.centerx < kaempfer_rechts.rechteck.centerx:
@@ -324,6 +369,10 @@ while laufen:
                     siege_links = 0
                     siege_rechts = 0
                     runde = 1
+
+                    pygame.mixer.music.stop()
+                    pygame.mixer.music.load(menu_music)
+                    pygame.mixer.music.play(-1)
                     
                 else:
                     runde += 1
