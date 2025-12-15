@@ -158,8 +158,8 @@ charaktere = [
         "ordner": "Ressourcen/samurai 1",
         "frames": {"idle": 4, "run": 8, "jump": 2, "attack": 4, "hit": 3, "death": 7},
         "scale": 3,
-        # tiefer setzen → y größer
-        "offset": [60, 53]
+        # Positionsbestimmung
+        "offset": [85, 53]
     },
     {
         "name": "Samurai 2",
@@ -167,7 +167,7 @@ charaktere = [
         "ordner": "Ressourcen/samurai 2",
         "frames": {"idle": 8, "run": 8, "jump": 2, "attack": 6, "hit": 3, "death": 6},
         "scale": 3,
-        "offset": [60, 48]
+        "offset": [85, 48]
     },
 ]
 
