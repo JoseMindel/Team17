@@ -87,6 +87,12 @@ class Kaempfer:
         dx = 0
         dy = 0
 
+        # wenn tot = nur noch death animation, keine steuerung mehr
+        if not self.alive:
+            self.aktion = 6   # death
+            self._aktualisiere_frame()
+            return
+
         tasten = pygame.key.get_pressed()
         self.running = False
 
@@ -140,13 +146,10 @@ class Kaempfer:
         dy += self.geschwindigkeit_y
 
         # Bildschirmgrenzen: Sprite muss vollständig auf dem Bildschirm bleiben
-        sprite_w = self.bild.get_width() if self.bild is not None else (self.size * self.image_scale)
-        offset_x = self.offset[0] * self.image_scale
-        draw_x_next = (self.rechteck.x + dx) - offset_x
-        if draw_x_next < 0:
-            dx += -draw_x_next
-        if draw_x_next + sprite_w > bildschirmbreite:
-            dx -= (draw_x_next + sprite_w - bildschirmbreite)
+        if self.rechteck.left + dx < 0:
+            dx = -self.rechteck.left
+        elif self.rechteck.right + dx > bildschirmbreite:
+            dx = bildschirmbreite - self.rechteck.right
 
         # Boden-Kollision
         boden = bildschirmhoehe - 110
@@ -180,6 +183,12 @@ class Kaempfer:
         SCHWERKRAFT = 2
         dx = 0
         dy = 0
+
+        # wenn tot = nur noch death animation, keine steuerung mehr
+        if not self.alive:
+            self.aktion = 6   # death
+            self._aktualisiere_frame()
+            return
 
         tasten = pygame.key.get_pressed()
         self.running = False
@@ -234,13 +243,10 @@ class Kaempfer:
         dy += self.geschwindigkeit_y
 
         # Bildschirmgrenzen: Sprite muss vollständig auf dem Bildschirm bleiben
-        sprite_w = self.bild.get_width() if self.bild is not None else (self.size * self.image_scale)
-        offset_x = self.offset[0] * self.image_scale
-        draw_x_next = (self.rechteck.x + dx) - offset_x
-        if draw_x_next < 0:
-            dx += -draw_x_next
-        if draw_x_next + sprite_w > bildschirmbreite:
-            dx -= (draw_x_next + sprite_w - bildschirmbreite)
+        if self.rechteck.left + dx < 0:
+            dx = -self.rechteck.left
+        elif self.rechteck.right + dx > bildschirmbreite:
+            dx = bildschirmbreite - self.rechteck.right
 
         # Boden-Kollision
         boden = bildschirmhoehe - 110
@@ -270,13 +276,27 @@ class Kaempfer:
 
     def _aktualisiere_frame(self):
         """Frame-Animation aktualisieren."""
+        if self.gesundheit <= 0 and self.alive:
+            self.gesundheit = 0
+            self.alive = False
+            self.aktion = 6  # Tod
+            self.frame_index = 0
+
         if not self.animations_liste:
             return
+        
         self.frame_zeitgeber += 1
         if self.frame_zeitgeber >= self.frame_verzoegerung:
             self.frame_zeitgeber = 0
             frames = self.animations_liste[self.aktion]
-            self.frame_index = (self.frame_index + 1) % len(frames)
+
+            #todes animation: nur bis zum letzten bild, kein loop
+            if self.aktion == 6:   # Tod
+                if self.frame_index < len(frames) - 1:
+                    self.frame_index += 1
+            else:
+                self.frame_index = (self.frame_index + 1) % len(frames)
+
             self.bild = frames[self.frame_index]
 
     def _angriff(self, oberflaeche, gegner):
